@@ -1,4 +1,4 @@
-# Request Log Analyzer for Laravel
+﻿# Request Log Analyzer for Laravel
 
 **Monitor, analyze, and debug HTTP requests, database queries, errors, and performance metrics in real-time with an interactive dashboard.**
 
@@ -13,7 +13,7 @@
 
 ```bash
 # 1. Install
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 
 # 2. Run setup command
 php artisan analyzer:install
@@ -93,7 +93,7 @@ The dashboard provides real-time insights into your application:
 
 ### Step 1: Install Package
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 ```
 
 ### Step 2: Run Setup

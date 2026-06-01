@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -465,7 +465,7 @@
 
     {{-- Footer --}}
     <div class="sidebar-footer">
-        <div style="font-size:.65rem;color:#475569;">nin/request-log-analyzer</div>
+        <div style="font-size:.65rem;color:#475569;">nintis/request-log-analyzer</div>
     </div>
 </nav>
 
@@ -482,7 +482,7 @@
         @yield('content')
     </div>
 
-    <footer>Request Log Analyzer &mdash; nin/request-log-analyzer</footer>
+    <footer>Request Log Analyzer &mdash; nintis/request-log-analyzer</footer>
 </div>
 
 @stack('scripts')

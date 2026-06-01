@@ -1,4 +1,4 @@
-# Request Log Analyzer - Installation Guide
+﻿# Request Log Analyzer - Installation Guide
 
 ## Overview
 
@@ -9,7 +9,7 @@ The **Request Log Analyzer** package is a comprehensive Laravel package for logg
 ### 1. Install via Composer
 
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 ```
 
 ### 2. Run the Installation Command
@@ -45,7 +45,7 @@ php artisan package:discover
 
 You should see:
 ```
-nin/request-log-analyzer .............................................. DONE
+nintis/request-log-analyzer .............................................. DONE
 ```
 
 ## Publishing Assets

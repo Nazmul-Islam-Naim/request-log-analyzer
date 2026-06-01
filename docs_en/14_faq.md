@@ -1,4 +1,4 @@
-# Frequently Asked Questions (FAQ)
+﻿# Frequently Asked Questions (FAQ)
 
 Common questions about Request Log Analyzer.
 
@@ -82,7 +82,7 @@ Not recommended. Keep one version installed.
 
 To update:
 ```bash
-composer update nin/request-log-analyzer
+composer update nintis/request-log-analyzer
 php artisan migrate
 ```
 
@@ -409,7 +409,7 @@ Then check:
    php -v
    php artisan config:show REQUEST_LOG_ANALYZER
    ```
-3. Check GitHub issues: [nin/request-log-analyzer](https://github.com/nin-company/request-log-analyzer)
+3. Check GitHub issues: [nintis/request-log-analyzer](https://github.com/nin-company/request-log-analyzer)
 
 ---
 
@@ -532,7 +532,7 @@ See [TESTING.md](#) for full testing guide.
 ### Where's the source code?
 
 - GitHub: [nin-company/request-log-analyzer](https://github.com/nin-company/request-log-analyzer)
-- Vendor: `vendor/nin/request-log-analyzer/`
+- Vendor: `vendor/nintis/request-log-analyzer/`
 
 ---
 

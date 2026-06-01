@@ -1,4 +1,4 @@
-# Troubleshooting Guide - Request Log Analyzer
+﻿# Troubleshooting Guide - Request Log Analyzer
 
 Solutions to common problems and issues.
 
@@ -23,7 +23,7 @@ php artisan config:clear
 php artisan vendor:publish --tag=request-log-analyzer-config --force
 
 # 4. If still failing:
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan analyzer:install
 ```
 

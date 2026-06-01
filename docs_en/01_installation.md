@@ -1,10 +1,10 @@
-# Installation Guide - Request Log Analyzer
+﻿# Installation Guide - Request Log Analyzer
 
 ## 📋 Quick Installation (60 seconds)
 
 ```bash
 # 1. Install package
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 
 # 2. Run install command
 php artisan analyzer:install
@@ -51,7 +51,7 @@ php artisan analyzer:install --no-migrate   # Skip migrations
 
 ```bash
 # Install
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 
 # Publish config
 php artisan vendor:publish --tag=request-log-analyzer-config
@@ -74,7 +74,7 @@ If package is in `packages/NIN/RequestLogAnalyzer/`:
 ]
 
 # Then:
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan analyzer:install
 ```
 

@@ -1,4 +1,4 @@
-# Package Installation Verification Checklist
+﻿# Package Installation Verification Checklist
 
 ## ✅ Package Structure
 
@@ -271,14 +271,14 @@
 
 ### Method 1: Quick Install (Recommended)
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan analyzer:install
 # Add middleware to bootstrap/app.php
 ```
 
 ### Method 2: Manual Install
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan vendor:publish --tag=request-log-analyzer
 php artisan migrate
 # Add middleware to bootstrap/app.php
@@ -286,7 +286,7 @@ php artisan migrate
 
 ### Method 3: Custom Install
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan vendor:publish --tag=request-log-analyzer-config
 php artisan vendor:publish --tag=request-log-analyzer-views
 php artisan vendor:publish --tag=request-log-analyzer-migrations
@@ -337,6 +337,6 @@ The package can be:
 ---
 
 **Date:** May 13, 2026  
-**Package:** nin/request-log-analyzer  
+**Package:** nintis/request-log-analyzer  
 **Version:** 1.0.0  
 **Status:** ✅ PRODUCTION READY

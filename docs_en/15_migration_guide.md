@@ -1,4 +1,4 @@
-# Migration Guide: v1 to v2
+﻿# Migration Guide: v1 to v2
 
 Upgrading Request Log Analyzer from v1 to v2.
 
@@ -32,7 +32,7 @@ php artisan db:show  # Verify connection
 ### Check Current Version
 
 ```bash
-composer show nin/request-log-analyzer
+composer show nintis/request-log-analyzer
 # Look for: version
 ```
 
@@ -48,7 +48,7 @@ composer show nin/request-log-analyzer
 
 ```bash
 # Update package
-composer require "nin/request-log-analyzer:^2.0"
+composer require "nintis/request-log-analyzer:^2.0"
 
 # Wait for installation
 # May take 1-5 minutes
@@ -58,7 +58,7 @@ composer require "nin/request-log-analyzer:^2.0"
 ```bash
 # Clear composer cache and retry
 composer clear-cache
-composer require "nin/request-log-analyzer:^2.0"
+composer require "nintis/request-log-analyzer:^2.0"
 ```
 
 ---
@@ -371,7 +371,7 @@ If v2 doesn't work and you need to go back:
 mysql -u root -p your_database < backup_20240101.sql
 
 # 2. Rollback to v1
-composer require "nin/request-log-analyzer:^1.0"
+composer require "nintis/request-log-analyzer:^1.0"
 
 # 3. Clear cache
 composer dump-autoload

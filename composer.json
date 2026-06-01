@@ -1,13 +1,13 @@
-{
-    "name": "nin/request-log-analyzer",
+﻿{
+    "name": "nintis/request-log-analyzer",
     "description": "A Laravel package for logging and analyzing HTTP requests.",
     "version": "1.0.0",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "NIN",
-            "email": "nin@example.com"
+            "name": "Nazmul Islam Naim",
+            "email": "nazmulislam.bdb@gmail.com"
         }
     ],
     "require": {

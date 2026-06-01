@@ -1,9 +1,9 @@
-# Request Log Analyzer - Quick Reference
+﻿# Request Log Analyzer - Quick Reference
 
 ## Installation (30 seconds)
 
 ```bash
-composer require nin/request-log-analyzer
+composer require nintis/request-log-analyzer
 php artisan analyzer:install
 ```
 
@@ -234,7 +234,7 @@ php artisan vendor:publish --tag=request-log-analyzer-assets
 - 📖 [Full Documentation](./INSTALLATION.md)
 - 🧪 [Test Results](../INSTALLATION_TEST_RESULTS.md)
 - 📝 [Feature Guides](./ALERTS.md)
-- 💬 [GitHub Issues](https://github.com/nin/request-log-analyzer)
+- 💬 [GitHub Issues](https://github.com/nintis/request-log-analyzer)
 
 ---
 
