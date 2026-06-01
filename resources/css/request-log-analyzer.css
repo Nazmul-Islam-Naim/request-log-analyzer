@@ -1,0 +1,76 @@
+/* Request Log Analyzer Styles */
+
+:root {
+    --rla-primary: #3b82f6;
+    --rla-success: #10b981;
+    --rla-warning: #f59e0b;
+    --rla-danger: #ef4444;
+    --rla-info: #06b6d4;
+}
+
+.rla-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.rla-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rla-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.rla-badge-primary {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.rla-badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.rla-badge-warning {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.rla-badge-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.rla-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rla-table th {
+    background: #f9fafb;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.rla-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.rla-table tbody tr:hover {
+    background: #f9fafb;
+}

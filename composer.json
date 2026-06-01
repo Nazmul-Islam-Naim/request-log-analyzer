@@ -1,0 +1,39 @@
+{
+    "name": "nin/request-log-analyzer",
+    "description": "A Laravel package for logging and analyzing HTTP requests.",
+    "version": "1.0.0",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "NIN",
+            "email": "nin@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/database": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "NIN\\RequestLogAnalyzer\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider"
+            ],
+            "aliases": {
+                "RequestLogAnalyzer": "NIN\\RequestLogAnalyzer\\Facades\\RequestLogAnalyzer"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
