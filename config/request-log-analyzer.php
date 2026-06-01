@@ -432,4 +432,86 @@ return [
         'schedule'       => env('REQUEST_LOG_ANALYZER_CLEANUP_SCHEDULE', '0 2 * * *'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Alert System
+    |--------------------------------------------------------------------------
+    | Trigger and send alerts when error or slow request thresholds are exceeded.
+    |
+    | enabled  — master switch for the alert system.
+    | channels — array of channels to send alerts through: 'log', 'email', 'discord'.
+    |
+    | error_alerts — trigger when error count exceeds threshold in time window.
+    |   enabled              — enable error alerts
+    |   threshold            — number of errors to trigger alert
+    |   time_window_minutes  — count errors within this window
+    |   cooldown_minutes     — wait before sending another alert
+    |
+    | slow_request_alerts — trigger when slow request count exceeds threshold.
+    |   enabled              — enable slow request alerts
+    |   threshold            — number of slow requests to trigger alert
+    |   time_window_minutes  — count slow requests within this window
+    |   cooldown_minutes     — wait before sending another alert
+    |
+    | email_config — email settings for alert delivery.
+    |   from       — sender email address
+    |   to         — recipient email(s), comma-separated string
+    |   subject    — email subject template ({type} is replaced with alert type)
+    |
+    | discord_config — Discord webhook settings.
+    |   webhook_url  — incoming webhook URL
+    |   username     — bot display name
+    |   avatar_url   — bot avatar image URL
+    |   color_errors — embed colour for error alerts (decimal)
+    |   color_slow   — embed colour for slow-request alerts (decimal)
+    |
+    | Env: REQUEST_LOG_ANALYZER_ALERTS_ENABLED
+    |      REQUEST_LOG_ANALYZER_ALERTS_CHANNELS
+    |      REQUEST_LOG_ANALYZER_ERROR_ALERTS_ENABLED
+    |      REQUEST_LOG_ANALYZER_ERROR_ALERTS_THRESHOLD
+    |      REQUEST_LOG_ANALYZER_ERROR_ALERTS_WINDOW
+    |      REQUEST_LOG_ANALYZER_ERROR_ALERTS_COOLDOWN
+    |      REQUEST_LOG_ANALYZER_SLOW_ALERTS_ENABLED
+    |      REQUEST_LOG_ANALYZER_SLOW_ALERTS_THRESHOLD
+    |      REQUEST_LOG_ANALYZER_SLOW_ALERTS_WINDOW
+    |      REQUEST_LOG_ANALYZER_SLOW_ALERTS_COOLDOWN
+    |      REQUEST_LOG_ANALYZER_ALERTS_FROM
+    |      REQUEST_LOG_ANALYZER_ALERTS_TO
+    |      REQUEST_LOG_ANALYZER_DISCORD_WEBHOOK
+    |      REQUEST_LOG_ANALYZER_DISCORD_USERNAME
+    |      REQUEST_LOG_ANALYZER_DISCORD_AVATAR
+    */
+    'alerts' => [
+        'enabled'  => env('REQUEST_LOG_ANALYZER_ALERTS_ENABLED', true),
+        'channels' => explode(',', env('REQUEST_LOG_ANALYZER_ALERTS_CHANNELS', 'log')),
+
+        'error_alerts' => [
+            'enabled'              => env('REQUEST_LOG_ANALYZER_ERROR_ALERTS_ENABLED', true),
+            'threshold'            => (int) env('REQUEST_LOG_ANALYZER_ERROR_ALERTS_THRESHOLD', 10),
+            'time_window_minutes'  => (int) env('REQUEST_LOG_ANALYZER_ERROR_ALERTS_WINDOW', 5),
+            'cooldown_minutes'     => (int) env('REQUEST_LOG_ANALYZER_ERROR_ALERTS_COOLDOWN', 10),
+        ],
+
+        'slow_request_alerts' => [
+            'enabled'              => env('REQUEST_LOG_ANALYZER_SLOW_ALERTS_ENABLED', true),
+            'threshold'            => (int) env('REQUEST_LOG_ANALYZER_SLOW_ALERTS_THRESHOLD', 5),
+            'time_window_minutes'  => (int) env('REQUEST_LOG_ANALYZER_SLOW_ALERTS_WINDOW', 5),
+            'cooldown_minutes'     => (int) env('REQUEST_LOG_ANALYZER_SLOW_ALERTS_COOLDOWN', 10),
+        ],
+
+        'email_config' => [
+            'from'    => env('REQUEST_LOG_ANALYZER_ALERTS_FROM', env('MAIL_FROM_ADDRESS', 'noreply@example.com')),
+            'to'      => explode(',', env('REQUEST_LOG_ANALYZER_ALERTS_TO', '')),
+            'subject' => 'Request Log Alert: {type}',
+        ],
+
+        'discord_config' => [
+            'webhook_url' => env('REQUEST_LOG_ANALYZER_DISCORD_WEBHOOK', ''),
+            'username'    => env('REQUEST_LOG_ANALYZER_DISCORD_USERNAME', 'Request Log Analyzer'),
+            'avatar_url'  => env('REQUEST_LOG_ANALYZER_DISCORD_AVATAR', ''),
+            'color_errors' => env('REQUEST_LOG_ANALYZER_DISCORD_COLOR_ERRORS', '15158332'),  // Red
+            'color_slow'   => env('REQUEST_LOG_ANALYZER_DISCORD_COLOR_SLOW', '16776960'),    // Yellow
+        ],
+    ],
+
 ];
