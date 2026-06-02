@@ -135,7 +135,7 @@ class RequestLogAnalyzerServiceProvider extends ServiceProvider
         // ── Publishing database migrations ───────────────────────────────
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([
-            __DIR__.'/../database/migrations/' => database_path('migrations'),
+            __DIR__.'/../database/migrations/' => database_path('migrations/request-log-analyzer'),
         ], 'request-log-analyzer-migrations');
 
         // ── Publishing views ─────────────────────────────────────────────

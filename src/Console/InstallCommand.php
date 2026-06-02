@@ -4,14 +4,6 @@ namespace NIN\RequestLogAnalyzer\Console;
 
 use Illuminate\Console\Command;
 
-/**
- * analyzer:install
- *
- * One-shot setup:
- *  1. Publishes the package config to config/request-log-analyzer.php
- *  2. Publishes migrations to database/migrations
- *  3. Runs any pending migrations for the package tables
- */
 class InstallCommand extends Command
 {
     protected $signature = 'analyzer:install
@@ -55,7 +47,10 @@ class InstallCommand extends Command
         // ── 3. Run migrations ─────────────────────────────────────────────
         if (! $this->option('no-migrate')) {
             $this->components->task('Running package migrations', function () {
-                $this->call('migrate', ['--force' => true]);
+                $this->call('migrate', [
+                    '--force' => true,
+                    '--path'  => 'database/migrations/request-log-analyzer',
+                ]);
             });
         } else {
             $this->components->warn('Skipped migrations (--no-migrate flag set).');
