@@ -22,6 +22,7 @@ class InstallCommand extends Command
     public function handle(): int
     {
         $this->components->info('Installing Request Log Analyzer…');
+        $migrationsPath = __DIR__.'/../../database/migrations';
 
         // ── 1. Publish config ─────────────────────────────────────────────
         $this->components->task('Publishing config file', function () {
@@ -36,8 +37,11 @@ class InstallCommand extends Command
 
         // ── 2. Run migrations ─────────────────────────────────────────────
         if (! $this->option('no-migrate')) {
-            $this->components->task('Running migrations', function () {
-                $this->call('migrate', ['--force' => true]);
+            $this->components->task('Running package migrations', function () use ($migrationsPath) {
+                $this->call('migrate', [
+                    '--force' => true,
+                    '--path' => $migrationsPath,
+                ]);
             });
         } else {
             $this->components->warn('Skipped migrations (--no-migrate flag set).');
