@@ -9,24 +9,27 @@ use Illuminate\Console\Command;
  *
  * One-shot setup:
  *  1. Publishes the package config to config/request-log-analyzer.php
- *  2. Runs any pending migrations for the package tables
+ *  2. Publishes migrations to database/migrations
+ *  3. Runs any pending migrations for the package tables
  */
 class InstallCommand extends Command
 {
     protected $signature = 'analyzer:install
-                            {--force : Overwrite existing config file}
+                            {--force : Overwrite existing config and migration files}
                             {--no-migrate : Skip running migrations}';
 
-    protected $description = 'Install the Request Log Analyzer: publish config and run migrations';
+    protected $description = 'Install the Request Log Analyzer: publish config, migrations and run migrations';
 
     public function handle(): int
     {
         $this->components->info('Installing Request Log Analyzer…');
-        $migrationsPath = __DIR__.'/../../database/migrations';
 
         // ── 1. Publish config ─────────────────────────────────────────────
         $this->components->task('Publishing config file', function () {
-            $args = ['--tag' => 'request-log-analyzer-config', '--provider' => 'NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider'];
+            $args = [
+                '--tag'      => 'request-log-analyzer-config',
+                '--provider' => 'NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider',
+            ];
 
             if ($this->option('force')) {
                 $args['--force'] = true;
@@ -35,13 +38,24 @@ class InstallCommand extends Command
             $this->call('vendor:publish', $args);
         });
 
-        // ── 2. Run migrations ─────────────────────────────────────────────
+        // ── 2. Publish migrations ─────────────────────────────────────────
+        $this->components->task('Publishing migrations', function () {
+            $args = [
+                '--tag'      => 'request-log-analyzer-migrations',
+                '--provider' => 'NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider',
+            ];
+
+            if ($this->option('force')) {
+                $args['--force'] = true;
+            }
+
+            $this->call('vendor:publish', $args);
+        });
+
+        // ── 3. Run migrations ─────────────────────────────────────────────
         if (! $this->option('no-migrate')) {
-            $this->components->task('Running package migrations', function () use ($migrationsPath) {
-                $this->call('migrate', [
-                    '--force' => true,
-                    '--path' => $migrationsPath,
-                ]);
+            $this->components->task('Running package migrations', function () {
+                $this->call('migrate', ['--force' => true]);
             });
         } else {
             $this->components->warn('Skipped migrations (--no-migrate flag set).');
