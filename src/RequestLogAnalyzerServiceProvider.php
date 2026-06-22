@@ -123,29 +123,30 @@ class RequestLogAnalyzerServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (! config('request-log-analyzer.enabled', true)) {
-            return;
-        }
-
         // ── Publishing configuration ─────────────────────────────────────
+        // These must run unconditionally so that `vendor:publish` always works
+        // regardless of whether the analyzer is enabled or disabled in .env.
         $this->publishes([
             __DIR__.'/../config/request-log-analyzer.php' => config_path('request-log-analyzer.php'),
         ], 'request-log-analyzer-config');
 
         // ── Publishing database migrations ───────────────────────────────
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([
             __DIR__.'/../database/migrations/' => database_path('migrations/request-log-analyzer'),
         ], 'request-log-analyzer-migrations');
 
         // ── Publishing views ─────────────────────────────────────────────
+        // loadViewsFrom must also be unconditional: once a user has published
+        // views to resources/views/vendor/request-log-analyzer/, Laravel checks
+        // that path first. If the namespace is not registered (because enabled=false
+        // skipped boot), any controller that references a view will throw
+        // "View [request-log-analyzer::xxx] not found".
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'request-log-analyzer');
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/request-log-analyzer'),
         ], 'request-log-analyzer-views');
 
         // ── Publishing routes (optional) ─────────────────────────────────
-        // Users can optionally customize the routes
         $this->publishes([
             __DIR__.'/../routes/web.php' => base_path('routes/vendor/request-log-analyzer-web.php'),
             __DIR__.'/../routes/api.php' => base_path('routes/vendor/request-log-analyzer-api.php'),
@@ -160,11 +161,22 @@ class RequestLogAnalyzerServiceProvider extends ServiceProvider
         // ── Publishing all assets at once ────────────────────────────────
         $this->publishes([
             __DIR__.'/../config/request-log-analyzer.php' => config_path('request-log-analyzer.php'),
-            __DIR__.'/../database/migrations/' => database_path('migrations'),
+            __DIR__.'/../database/migrations/' => database_path('migrations/request-log-analyzer'),
             __DIR__.'/../resources/views' => resource_path('views/vendor/request-log-analyzer'),
             __DIR__.'/../resources/css' => public_path('vendor/request-log-analyzer/css'),
             __DIR__.'/../resources/js' => public_path('vendor/request-log-analyzer/js'),
         ], 'request-log-analyzer');
+
+        // ── Early exit when disabled ─────────────────────────────────────
+        // Publishing and view-namespace registration happen above so that
+        // `vendor:publish` and view resolution always work. Runtime behaviors
+        // (routes, DB listeners, exception hooks, event listeners) are skipped.
+        if (! config('request-log-analyzer.enabled', true)) {
+            return;
+        }
+
+        // ── Migrations (auto-discovered by `php artisan migrate`) ────────
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // ── Load routes ──────────────────────────────────────────────────
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');

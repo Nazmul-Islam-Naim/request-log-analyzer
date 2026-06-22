@@ -1,6 +1,6 @@
-﻿# Request Log Analyzer for Laravel
+# Request Log Analyzer for Laravel
 
-**Monitor, analyze, and debug HTTP requests, database queries, errors, and performance metrics in real-time with an interactive dashboard.**
+Monitor, analyze, and debug HTTP requests, database queries, errors, and performance metrics with an interactive dashboard.
 
 [![Latest Version](https://img.shields.io/badge/version-2.0-blue)]()
 [![Laravel Version](https://img.shields.io/badge/Laravel-10%2B-brightgreen)]()
@@ -9,336 +9,834 @@
 
 ---
 
-## 🎯 Quick Start (60 Seconds)
+## Table of Contents
+
+1. [Requirements](#1-requirements)
+2. [Installation](#2-installation)
+3. [Register Middleware](#3-register-middleware)
+4. [Verify Installation](#4-verify-installation)
+5. [Dashboard & Pages](#5-dashboard--pages)
+6. [Configuration Reference](#6-configuration-reference)
+7. [Artisan Commands](#7-artisan-commands)
+8. [Tagging Requests](#8-tagging-requests)
+9. [JSON API](#9-json-api)
+10. [Data Export](#10-data-export)
+11. [Alerts](#11-alerts)
+12. [Data Management & Cleanup](#12-data-management--cleanup)
+13. [Access Control](#13-access-control)
+14. [Async Logging (Queue)](#14-async-logging-queue)
+15. [Environment Presets](#15-environment-presets)
+16. [Troubleshooting](#16-troubleshooting)
+17. [FAQ](#17-faq)
+
+---
+
+## 1. Requirements
+
+| Requirement | Version |
+|-------------|---------|
+| PHP | 8.1+ |
+| Laravel | 10, 11, 12, 13 |
+| Database | MySQL, PostgreSQL, SQLite |
+| Optional | Redis (for async logging) |
+
+---
+
+## 2. Installation
+
+### Step 1 — Install via Composer
 
 ```bash
-# 1. Install
 composer require nintis/request-log-analyzer
+```
 
-# 2. Run setup command
+### Step 2 — Run the install command
+
+```bash
 php artisan analyzer:install
+```
 
-# 3. Open dashboard
-php artisan serve
-# Visit: http://localhost:8000/request-log-analyzer
+This single command:
+- Publishes `config/request-log-analyzer.php`
+- Publishes migrations to `database/migrations/request-log-analyzer/`
+- Publishes views to `resources/views/vendor/request-log-analyzer/`
+- Publishes CSS/JS assets to `public/vendor/request-log-analyzer/`
+- Runs all package migrations
+
+**Options:**
+
+```bash
+php artisan analyzer:install --force       # Overwrite all published files
+php artisan analyzer:install --no-migrate  # Skip running migrations
+```
+
+### Step 3 — Register the middleware
+
+See [Section 3](#3-register-middleware).
+
+### Manual publish (optional)
+
+```bash
+php artisan vendor:publish --tag=request-log-analyzer-config
+php artisan vendor:publish --tag=request-log-analyzer-migrations
+php artisan vendor:publish --tag=request-log-analyzer-views
+php artisan vendor:publish --tag=request-log-analyzer-assets
+
+# Or all at once:
+php artisan vendor:publish --tag=request-log-analyzer
 ```
 
 ---
 
-## ✨ Key Features
+## 3. Register Middleware
 
-| Feature | Description |
-|---------|-------------|
-| 🔗 **HTTP Requests** | Capture method, URL, status, duration, response time |
-| 💾 **Database Queries** | Monitor SQL queries, execution time, slow queries |
-| ⚠️ **Error Tracking** | Catch exceptions and errors with stack traces |
-| 📈 **Analytics** | Response times, memory usage, performance insights |
-| 🌍 **GeoIP Tracking** | Geographic location from IP address |
-| 🔐 **Security** | Login attempts, active users, suspicious activity |
-| 🔒 **Data Masking** | Auto-hide passwords, API keys, tokens |
-| ⚡ **Async Logging** | Non-blocking queue-based logging |
-| 📊 **Dashboard** | Interactive charts, filters, and insights |
-| 🔌 **JSON API** | Programmatic access to all data |
+The `TrackRequest` middleware captures every request. Without it, nothing is logged.
 
----
+### Laravel 11, 12, 13 — `bootstrap/app.php`
 
-## 📋 Requirements
+```php
+use NIN\RequestLogAnalyzer\Http\Middleware\TrackRequest;
 
-- **Laravel**: 10, 11, 12, 13
-- **PHP**: 8.1+
-- **Database**: MySQL, PostgreSQL, SQLite
-- **Optional**: Redis (for async logging)
+return Application::configure(basePath: dirname(__DIR__))
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(TrackRequest::class);
+    })
+    ->create();
+```
 
----
+### Laravel 10 — `app/Http/Kernel.php`
 
-## 📚 Documentation
+```php
+use NIN\RequestLogAnalyzer\Http\Middleware\TrackRequest;
 
-**Quick Links**:
-- ⚡ [Installation (01_installation.md)](docs_en/01_installation.md) — Step-by-step setup (10 min)
-- ⚙️ [Configuration (02_configuration.md)](docs_en/02_configuration.md) — All options explained (15 min)
-- 🖥️ [Dashboard Guide (11_dashboard_guide.md)](docs_en/11_dashboard_guide.md) — Using the dashboard (20 min)
-- 🆘 [Troubleshooting (13_troubleshooting.md)](docs_en/13_troubleshooting.md) — Common issues & fixes
-- ❓ [FAQ (14_faq.md)](docs_en/14_faq.md) — Frequently asked questions
-- 🔄 [Migration Guide (15_migration_guide.md)](docs_en/15_migration_guide.md) — Upgrading from v1
+protected $middleware = [
+    // ... other global middleware
+    TrackRequest::class,
+];
+```
 
-**Full Documentation**:
-- [Complete Index (docs_en/INDEX.md)](docs_en/INDEX.md) — All documentation files
-- 🇧🇩 [Bengali Docs (docs_bn/README_BN.md)](docs_bn/README_BN.md) — বাংলা ডকুমেন্টেশন
+### Route-level only (track specific routes)
+
+```php
+Route::middleware([TrackRequest::class])->group(function () {
+    Route::get('/api/orders', [OrderController::class, 'index']);
+    Route::post('/api/orders', [OrderController::class, 'store']);
+});
+```
+
+> **How it works:** `TrackRequest` runs in two phases. `handle()` snapshots the incoming request (cheap). `terminate()` writes to the database after the response is already sent to the browser, so users never wait for logging.
 
 ---
 
-## 📊 Dashboard Preview
+## 4. Verify Installation
 
-The dashboard provides real-time insights into your application:
+### Check the dashboard
 
-### 🖥️ Main Dashboard
+```
+http://localhost:8000/request-log-analyzer
+```
+
+The dashboard will be empty on a fresh install — make a request first, then refresh.
+
+### Check from the terminal
+
+```bash
+# Confirm tables were created
+php artisan db:show | grep rla
+
+# Confirm routes are registered
+php artisan route:list | grep request-log-analyzer
+```
+
+### Check with Tinker
+
+```bash
+php artisan tinker
+> DB::table('rla_requests')->count()        # Increases after each tracked request
+> config('request-log-analyzer.enabled')    # Should return true
+```
+
+---
+
+## 5. Dashboard & Pages
+
+All pages live under `/{route_prefix}` (default: `/request-log-analyzer`).
+
+| URL | Page | Description |
+|-----|------|-------------|
+| `/request-log-analyzer` | Dashboard | Hero stats, charts, recent requests, top routes, country map |
+| `/request-log-analyzer/requests` | Request list | Paginated, filterable list of all logged requests |
+| `/request-log-analyzer/requests/{id}` | Request detail | Full info, queries, errors for one request |
+| `/request-log-analyzer/requests/{id}/timeline` | Timeline | Per-step lifecycle: routing → controller → queries |
+| `/request-log-analyzer/slow-requests` | Slow requests | Requests exceeding `slow_request_threshold_ms` |
+| `/request-log-analyzer/analytics` | Route analytics | Most-hit routes and avg response time per route |
+| `/request-log-analyzer/api-insights` | API insights | Rate usage, suspicious IPs, rate-limit incidents |
+| `/request-log-analyzer/geo` | Geo analytics | Interactive world map and country breakdown |
+| `/request-log-analyzer/active-users` | Active users | Users active within the last N minutes |
+| `/request-log-analyzer/user-route-hits` | User route hits | Which routes each user has accessed |
+| `/request-log-analyzer/login-history` | Login history | Login/logout events per user |
+| `/request-log-analyzer/tools` | Tools | Manual cleanup, export buttons |
+| `/request-log-analyzer/replay` | Request replay | Store and re-execute past requests |
+
+### Request list filters
+
+The `/requests` page supports these query parameters:
+
+| Parameter | Example | Description |
+|-----------|---------|-------------|
+| `method` | `GET` | HTTP method |
+| `status` | `4xx` | Status class: `2xx`, `3xx`, `4xx`, `5xx` |
+| `status_code` | `404` | Exact status code |
+| `uri` | `/api/users` | Partial URI match |
+| `tag` | `payment` | Request tag |
+| `date_from` | `2026-01-01` | From date |
+| `date_to` | `2026-06-30` | To date |
+| `rt_min` | `100` | Min response time (ms) |
+| `rt_max` | `2000` | Max response time (ms) |
+| `search` | `login` | Full-text search across URL and error message |
+
+### Dashboard preview
+
 ![Dashboard Overview](resources/images/dashboard-01.png)
-
 ![Dashboard Details](resources/images/dashboard-02.png)
-
-### 📈 Analytics
 ![Analytics](resources/images/analytics.png)
-
-### 🌍 Geo Analytics
 ![Geo Analytics](resources/images/geo-analytics.png)
-
-### 🔌 API Insights
 ![API Insights](resources/images/api-insight.png)
 
+---
 
+## 6. Configuration Reference
+
+The config file lives at `config/request-log-analyzer.php`. Every option has a `.env` override.
+
+### Master switch
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_ENABLED` | `true` | When `false`: no routes, no DB writes, zero overhead |
+
+### Sampling
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_SAMPLE_RATE` | `100` | Percentage (0–100) of requests to log |
+| `REQUEST_LOG_ANALYZER_CAPTURE_ERRORS` | `true` | Always log 5xx responses regardless of sample rate |
+| `REQUEST_LOG_ANALYZER_CAPTURE_SLOW_MS` | `0` | Always log requests slower than this ms. `0` = disabled |
+| `REQUEST_LOG_ANALYZER_IGNORE_STATIC` | `true` | Skip `.css`, `.js`, image, and font requests entirely |
+
+### Feature toggles
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_TRACK_QUERIES` | `true` | Capture SQL queries via `DB::listen` |
+| `REQUEST_LOG_ANALYZER_TRACK_ERRORS` | `true` | Capture exceptions via the exception handler |
+| `REQUEST_LOG_ANALYZER_TRACK_STEPS` | `true` | Capture lifecycle steps for the timeline view |
+| `REQUEST_LOG_ANALYZER_TRACK_LOGIN_HISTORY` | `true` | Record login/logout events |
+| `REQUEST_LOG_ANALYZER_TRACK_GEO` | `true` | Resolve country/city via ip-api.com |
+| `REQUEST_LOG_ANALYZER_TRACK_REQ_HEADERS` | `false` | Store request headers |
+| `REQUEST_LOG_ANALYZER_TRACK_RES_HEADERS` | `false` | Store response headers |
+
+### Performance thresholds
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_SLOW_THRESHOLD_MS` | `500` | Requests over this are flagged "slow" |
+| `REQUEST_LOG_ANALYZER_SLOW_QUERY_MS` | `200` | Queries over this are flagged "slow" |
+| `REQUEST_LOG_ANALYZER_MAX_RECORDS` | `10000` | Maximum rows kept in `rla_requests` |
+| `REQUEST_LOG_ANALYZER_ACTIVE_WINDOW_MINUTES` | `5` | Minutes a user counts as "active" |
+
+### Async logging
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_ASYNC` | `false` | Dispatch a queue job instead of direct DB writes |
+| `REQUEST_LOG_ANALYZER_QUEUE_CONNECTION` | *(app default)* | `redis`, `database`, etc. |
+| `REQUEST_LOG_ANALYZER_QUEUE_NAME` | `default` | Target queue name |
+
+### GeoIP
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_GEO_API_URL` | `http://ip-api.com/json/{ip}` | Swap for a paid or self-hosted provider |
+| `REQUEST_LOG_ANALYZER_GEO_TIMEOUT` | `2` | Seconds before lookup is abandoned |
+
+Private/reserved IPs (127.x, 10.x, 192.168.x) are skipped automatically and stored as `NULL`.
+
+### Sensitive data masking
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_MASKING_ENABLED` | `true` | Master masking switch |
+| `REQUEST_LOG_ANALYZER_MASK_VALUE` | `[REDACTED]` | Replacement string |
+
+Masked by default:
+- **Body fields:** `password`, `password_confirmation`, `token`, `api_key`, `secret`, `_token`, `access_token`, `credit_card`, `card_number`, `cvv`, `ssn`
+- **Headers:** `authorization`, `x-api-key`, `x-auth-token`, `cookie`
+- **Query params:** `token`, `api_key`, `password`, `secret`, `access_token`
+- **Patterns:** Bearer tokens, `password=…`, `token=…`, `api_key=…`
+
+**Adding custom fields** in `config/request-log-analyzer.php`:
+
+```php
+'masking' => [
+    'fields' => [
+        'national_id',
+        'bank_account',
+    ],
+    'headers' => [
+        'x-internal-secret',
+    ],
+    'patterns' => [
+        '/my_token["\']?\s*[:=]\s*["\']?[\w\-]{10,}/i',
+    ],
+],
+```
+
+### Dashboard & routing
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_PREFIX` | `request-log-analyzer` | URI prefix for all dashboard routes |
+
+```php
+// config/request-log-analyzer.php
+'middleware' => ['web'],           // Default — open access
+'middleware' => ['web', 'auth'],   // Authenticated users only
+```
+
+### Ignored paths
+
+```php
+// config/request-log-analyzer.php
+'ignored_paths' => [
+    'request-log-analyzer*',
+    '_debugbar*',
+    'telescope*',
+    'horizon*',
+    'livewire*',
+],
+
+'ignore_routes' => [
+    'api.healthcheck',
+    'horizon.*',
+],
+```
+
+### API access
+
+| ENV key | Default | Description |
+|---------|---------|-------------|
+| `REQUEST_LOG_ANALYZER_API_ENABLED` | `true` | Enable the JSON API |
+| `REQUEST_LOG_ANALYZER_API_PREFIX` | `api/analyzer` | URI prefix for API routes |
+| `REQUEST_LOG_ANALYZER_API_TOKEN` | *(empty)* | Bearer token; empty = API returns 503 |
+
+### Automatic cleanup
+
+```php
+'cleanup' => [
+    'enabled'        => env('REQUEST_LOG_ANALYZER_CLEANUP_ENABLED', false),
+    'retention_days' => (int) env('REQUEST_LOG_ANALYZER_RETENTION_DAYS', 90),
+    'schedule'       => env('REQUEST_LOG_ANALYZER_CLEANUP_SCHEDULE', '0 2 * * *'),
+],
+```
 
 ---
 
-## 🚀 Getting Started in 3 Steps
+## 7. Artisan Commands
 
-### Step 1: Install Package
+| Command | Description |
+|---------|-------------|
+| `php artisan analyzer:install` | Publish config, migrations, views, assets; run migrations |
+| `php artisan analyzer:install --force` | Same, overwriting existing published files |
+| `php artisan analyzer:install --no-migrate` | Skip running migrations |
+| `php artisan analyzer:cleanup` | Delete records older than `retention_days` |
+| `php artisan analyzer:cleanup --days=7` | Override retention for this run |
+| `php artisan analyzer:cleanup --dry-run` | Preview what would be deleted |
+| `php artisan analyzer:clear --force` | Truncate all analyzer tables |
+| `php artisan analyzer:clear --older-than=7 --force` | Delete records older than 7 days |
+| `php artisan analyzer:report` | Print a stats summary to the console |
+| `php artisan analyzer:token` | Generate a Bearer token for the JSON API |
+| `php artisan analyzer:test-alert` | Fire a test alert through configured channels |
+
+**Seed test data (development only):**
+
 ```bash
-composer require nintis/request-log-analyzer
+php artisan db:seed --class="NIN\\RequestLogAnalyzer\\Database\\Seeders\\RequestLogAnalyzerTestDataSeeder"
 ```
-
-### Step 2: Run Setup
-```bash
-php artisan analyzer:install
-```
-This command automatically:
-- ✅ Publishes configuration file
-- ✅ Registers middleware  
-- ✅ Runs database migrations
-
-### Step 3: Access Dashboard
-Visit: `http://your-app.test/request-log-analyzer`
-
-You should see requests flowing in real-time!
 
 ---
 
-## 💡 Common Configurations
+## 8. Tagging Requests
 
-### For Development (Log Everything)
+Attach searchable labels to any request from anywhere in your application. Tags are stored as a JSON array and are filterable on the request list page.
+
+```php
+// Global helper
+logAnalyzer()->tag('payment');
+logAnalyzer()->tag(['payment', 'checkout']);
+
+// Facade
+use NIN\RequestLogAnalyzer\Facades\RequestLogAnalyzer;
+RequestLogAnalyzer::tag('admin');
+
+// Fluent chaining
+logAnalyzer()->tag('api')->tag('v2');
+```
+
+Tags are flushed once by the middleware in `terminate()` just before the database insert. Multiple `tag()` calls in the same request accumulate — they do not overwrite.
+
+---
+
+## 9. JSON API
+
+A read-only JSON API for programmatic access or external dashboard integration.
+
+### Set up a token
+
+```bash
+php artisan analyzer:token
+# Copy output to .env:
+REQUEST_LOG_ANALYZER_API_TOKEN=your-generated-token
+php artisan config:clear
+```
+
+### Authentication
+
+Include the token as a Bearer header on every request:
+
+```bash
+curl -H "Authorization: Bearer your-token" \
+     http://your-app.test/api/analyzer/requests
+```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/analyzer/requests` | Paginated request list |
+| `GET` | `/api/analyzer/errors` | Paginated error list |
+| `GET` | `/api/analyzer/stats` | Aggregate stats |
+
+### Example: stats response
+
+```json
+{
+  "total_requests": 15420,
+  "error_requests": 312,
+  "error_rate_percent": 2.02,
+  "avg_response_ms": 143.5,
+  "total_queries": 48900,
+  "slow_queries": 87,
+  "total_errors": 224,
+  "slow_requests": 156
+}
+```
+
+---
+
+## 10. Data Export
+
+Export data from the Tools page or directly via URL:
+
+| URL | Format |
+|-----|--------|
+| `/request-log-analyzer/export/requests?format=csv` | CSV |
+| `/request-log-analyzer/export/requests?format=excel` | XLSX |
+| `/request-log-analyzer/export/errors?format=csv` | CSV |
+| `/request-log-analyzer/export/queries?format=csv` | CSV |
+
+The export feature uses `maatwebsite/laravel-excel`, which is declared as a package dependency and installed automatically with Composer.
+
+---
+
+## 11. Alerts
+
+Fires notifications when error counts or slow request counts exceed configured thresholds.
+
+### Config
+
+```php
+'alerts' => [
+    'enabled'  => true,
+    'channels' => ['log'],   // 'log', 'email', 'discord'
+
+    'error_alerts' => [
+        'enabled'             => true,
+        'threshold'           => 10,   // Trigger after 10 errors...
+        'time_window_minutes' => 5,    // ...within 5 minutes
+        'cooldown_minutes'    => 10,   // Don't re-alert for 10 min
+    ],
+
+    'slow_request_alerts' => [
+        'enabled'             => true,
+        'threshold'           => 5,
+        'time_window_minutes' => 5,
+        'cooldown_minutes'    => 10,
+    ],
+],
+```
+
+### Channels
+
+**Log** (default):
+
+```env
+REQUEST_LOG_ANALYZER_ALERTS_CHANNELS=log
+```
+
+**Email:**
+
+```env
+REQUEST_LOG_ANALYZER_ALERTS_CHANNELS=email
+REQUEST_LOG_ANALYZER_ALERTS_FROM=noreply@yourapp.com
+REQUEST_LOG_ANALYZER_ALERTS_TO=admin@yourapp.com
+```
+
+**Discord:**
+
+```env
+REQUEST_LOG_ANALYZER_ALERTS_CHANNELS=discord
+REQUEST_LOG_ANALYZER_DISCORD_WEBHOOK=https://discord.com/api/webhooks/...
+REQUEST_LOG_ANALYZER_DISCORD_USERNAME=RequestLogAnalyzer
+```
+
+**Multiple channels:**
+
+```env
+REQUEST_LOG_ANALYZER_ALERTS_CHANNELS=log,email,discord
+```
+
+**Test your alert config:**
+
+```bash
+php artisan analyzer:test-alert
+```
+
+---
+
+## 12. Data Management & Cleanup
+
+### Manual cleanup
+
+```bash
+php artisan analyzer:cleanup                  # Uses retention_days from config
+php artisan analyzer:cleanup --days=14        # Custom retention for this run
+php artisan analyzer:cleanup --dry-run        # Preview without deleting
+php artisan analyzer:clear --force            # Truncate all tables
+```
+
+### Automatic scheduled cleanup
+
+```env
+REQUEST_LOG_ANALYZER_CLEANUP_ENABLED=true
+REQUEST_LOG_ANALYZER_RETENTION_DAYS=30
+REQUEST_LOG_ANALYZER_CLEANUP_SCHEDULE=0 2 * * *
+```
+
+The package self-registers this schedule — you do **not** need to add it to `App\Console\Kernel`. Output logs to `storage/logs/analyzer-cleanup.log`.
+
+### Delete a specific user's data (GDPR)
+
+```bash
+php artisan tinker
+> DB::table('rla_requests')->where('user_id', 42)->delete()
+> DB::table('rla_user_login_histories')->where('user_id', 42)->delete()
+```
+
+---
+
+## 13. Access Control
+
+By default the dashboard is open to anyone who can reach the URL. For production, restrict it.
+
+### Require authentication
+
+```php
+// config/request-log-analyzer.php
+'middleware' => ['web', 'auth'],
+```
+
+### Admin-only with a Gate
+
+**Step 1** — Define a gate in `AppServiceProvider`:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::define('viewAnalyzer', function ($user) {
+    return $user->is_admin;  // or ->hasRole('admin')
+});
+```
+
+**Step 2** — Reference it in the config:
+
+```php
+'middleware' => ['web', 'auth', 'can:viewAnalyzer'],
+```
+
+### Custom dashboard URL
+
+```env
+REQUEST_LOG_ANALYZER_PREFIX=devtools/logs
+# Dashboard is now at: /devtools/logs
+```
+
+---
+
+## 14. Async Logging (Queue)
+
+By default, DB writes happen synchronously in `terminate()` — after the response has been sent, so no user-visible delay. For high-traffic production, async mode moves those writes to a background worker and also moves the GeoIP HTTP lookup off the web process.
+
+### Enable async
+
+```env
+REQUEST_LOG_ANALYZER_ASYNC=true
+REQUEST_LOG_ANALYZER_QUEUE_CONNECTION=redis
+REQUEST_LOG_ANALYZER_QUEUE_NAME=analytics
+```
+
+### Start a worker
+
+```bash
+php artisan queue:work redis --queue=analytics
+# or with database queue (no Redis needed):
+php artisan queue:work database
+```
+
+### Supervisor config (production)
+
+```ini
+[program:rla-worker]
+command=php /var/www/artisan queue:work redis --queue=analytics --sleep=3 --tries=3
+autostart=true
+autorestart=true
+```
+
+### Monitor jobs
+
+```bash
+php artisan queue:failed          # List failed jobs
+php artisan queue:retry all       # Retry failed jobs
+php artisan queue:flush           # Clear failed jobs table
+```
+
+> If the queue is unavailable, jobs land in `failed_jobs`. The web request itself is never affected — logging failure never crashes the application.
+
+---
+
+## 15. Environment Presets
+
+### Development
+
 ```env
 REQUEST_LOG_ANALYZER_ENABLED=true
 REQUEST_LOG_ANALYZER_SAMPLE_RATE=100
+REQUEST_LOG_ANALYZER_ASYNC=false
+REQUEST_LOG_ANALYZER_MASKING_ENABLED=false
+REQUEST_LOG_ANALYZER_TRACK_GEO=false
 REQUEST_LOG_ANALYZER_TRACK_QUERIES=true
 REQUEST_LOG_ANALYZER_TRACK_ERRORS=true
 ```
 
-### For Production (Optimized)
+### Staging
+
 ```env
 REQUEST_LOG_ANALYZER_ENABLED=true
+REQUEST_LOG_ANALYZER_SAMPLE_RATE=50
 REQUEST_LOG_ANALYZER_ASYNC=true
 REQUEST_LOG_ANALYZER_QUEUE_CONNECTION=redis
-REQUEST_LOG_ANALYZER_SAMPLE_RATE=10
 REQUEST_LOG_ANALYZER_MASKING_ENABLED=true
+REQUEST_LOG_ANALYZER_CAPTURE_ERRORS=true
+REQUEST_LOG_ANALYZER_SLOW_THRESHOLD_MS=300
+```
+
+### Production (optimized)
+
+```env
+REQUEST_LOG_ANALYZER_ENABLED=true
+REQUEST_LOG_ANALYZER_SAMPLE_RATE=10
+REQUEST_LOG_ANALYZER_ASYNC=true
+REQUEST_LOG_ANALYZER_QUEUE_CONNECTION=redis
+REQUEST_LOG_ANALYZER_QUEUE_NAME=analytics
+REQUEST_LOG_ANALYZER_MASKING_ENABLED=true
+REQUEST_LOG_ANALYZER_CAPTURE_ERRORS=true
+REQUEST_LOG_ANALYZER_CAPTURE_SLOW_MS=500
+REQUEST_LOG_ANALYZER_IGNORE_STATIC=true
+REQUEST_LOG_ANALYZER_CLEANUP_ENABLED=true
 REQUEST_LOG_ANALYZER_RETENTION_DAYS=30
+```
+
+### Performance-first (minimal overhead)
+
+```env
+REQUEST_LOG_ANALYZER_SAMPLE_RATE=5
+REQUEST_LOG_ANALYZER_ASYNC=true
+REQUEST_LOG_ANALYZER_QUEUE_CONNECTION=redis
+REQUEST_LOG_ANALYZER_TRACK_GEO=false
+REQUEST_LOG_ANALYZER_TRACK_QUERIES=false
 REQUEST_LOG_ANALYZER_IGNORE_STATIC=true
 ```
 
-### For Debugging Specific Issues
+Expected overhead: **< 1ms per request**.
+
+---
+
+## 16. Troubleshooting
+
+### Dashboard returns 404
+
+```bash
+php artisan route:list | grep request-log-analyzer
+php artisan route:clear && php artisan route:cache
+
+# Confirm the package is not disabled
+php artisan tinker --execute="echo config('request-log-analyzer.enabled');"
+```
+
+### No data appearing in the dashboard
+
+1. Is `TrackRequest` middleware registered? Check `php artisan route:list`.
+2. Is `REQUEST_LOG_ANALYZER_SAMPLE_RATE` greater than `0`?
+3. Is `REQUEST_LOG_ANALYZER_ENABLED=true`?
+4. Have you made a request to a tracked route?
+
+```bash
+php artisan tinker
+> DB::table('rla_requests')->count()
+```
+
+### View not found / blank white page
+
+Stale published views from a previous install shadow new view files. Fix:
+
+```bash
+php artisan analyzer:install --force
+# or individually:
+php artisan vendor:publish --tag=request-log-analyzer-views --force
+php artisan view:clear
+```
+
+### "Class not found" after install
+
+```bash
+composer dump-autoload
+php artisan config:clear
+php artisan cache:clear
+```
+
+### Migration fails — "Table already exists"
+
+```bash
+php artisan migrate --pretend  # Preview what would run
+# If safe to reset:
+php artisan migrate:fresh
+```
+
+### App is slower after installing
+
 ```env
-REQUEST_LOG_ANALYZER_SAMPLE_RATE=100
-REQUEST_LOG_ANALYZER_SLOW_REQUEST_THRESHOLD_MS=1000
-REQUEST_LOG_ANALYZER_TRACK_QUERIES=true
+REQUEST_LOG_ANALYZER_ASYNC=true
+REQUEST_LOG_ANALYZER_QUEUE_CONNECTION=redis
+REQUEST_LOG_ANALYZER_TRACK_GEO=false
+REQUEST_LOG_ANALYZER_SAMPLE_RATE=10
+REQUEST_LOG_ANALYZER_IGNORE_STATIC=true
+```
+
+### GeoIP returns null for all IPs
+
+Private IPs (127.x, 10.x, 192.168.x) always return null — this is expected. For public IPs:
+
+```bash
+curl http://ip-api.com/json/8.8.8.8   # Test the endpoint
+```
+
+Increase timeout if lookups time out: `REQUEST_LOG_ANALYZER_GEO_TIMEOUT=5`
+
+### Async logging not working
+
+```bash
+# Check async is enabled
+php artisan tinker --execute="echo config('request-log-analyzer.async_logging');"
+
+# Check a worker is running
+ps aux | grep "queue:work"
+php artisan queue:work redis
+
+# Check for failed jobs
+php artisan queue:failed
+```
+
+### Changes to .env not taking effect
+
+```bash
+php artisan config:clear
+# Restart your dev server
+```
+
+### API returns 503
+
+```bash
+php artisan analyzer:token
+# Add to .env: REQUEST_LOG_ANALYZER_API_TOKEN=...
+php artisan config:clear
+```
+
+### Quick debug checklist
+
+```
+[ ] REQUEST_LOG_ANALYZER_ENABLED=true
+[ ] TrackRequest middleware registered (Kernel.php or bootstrap/app.php)
+[ ] Migrations run (php artisan migrate)
+[ ] Requests made to a tracked route
+[ ] REQUEST_LOG_ANALYZER_SAMPLE_RATE > 0
+[ ] Dashboard accessible at /request-log-analyzer
+[ ] DB::table('rla_requests')->count() > 0
 ```
 
 ---
 
-## 📊 What You Can Track
+## 17. FAQ
 
-The package automatically captures and displays:
+**Q: Is this safe for production?**
+Yes. With `ASYNC=true`, `SAMPLE_RATE=10`, and `MASKING_ENABLED=true` the overhead is under 5%. All DB writes happen after the response is sent, so users never wait for logging.
 
-- 🔗 **HTTP Requests** — Method, URL, status code, response time
-- 💾 **Database Queries** — SQL executed, query time, slow queries
-- ⚠️ **Errors & Exceptions** — Stack traces, error details, context
-- 👤 **User Activity** — Login history, active users, user routes
-- 🌍 **Geographic Data** — IP, country, city of requests
-- ⏱️ **Performance Metrics** — Response times, memory usage, bottlenecks
-- 🔐 **Security Events** — Suspicious activity, failed authentication
+**Q: Does it conflict with Laravel Telescope or Debugbar?**
+No. They run independently. If disk space is a concern, disable overlapping features — e.g. `TRACK_QUERIES=false` if Telescope already captures queries.
 
----
+**Q: How much disk space will it use?**
+Approximately 1–5 KB per logged request. At `SAMPLE_RATE=10` with 100,000 daily requests: ~10,000 rows × 3 KB ≈ 30 MB/day before retention cleanup. Set `RETENTION_DAYS=30` to keep storage bounded.
 
-## 🔒 Security & Privacy
+**Q: Can I use this without Redis?**
+Yes. Set `ASYNC=false` for synchronous logging (fine for low-traffic), or use `QUEUE_CONNECTION=database` for async without Redis.
 
-All data handling respects security and privacy:
+**Q: How do I change the dashboard URL?**
+Set `REQUEST_LOG_ANALYZER_PREFIX=your-path` in `.env` and clear the route cache: `php artisan route:clear`.
 
-✅ **Built-in Masking** — Passwords, API keys, tokens automatically hidden
-✅ **Access Control** — Restrict dashboard to authenticated users
-✅ **Data Retention** — Automatically delete old records
-✅ **GDPR Ready** — Delete user data on request
-✅ **Configurable** — Enable/disable features as needed
+**Q: The dashboard middleware is just `['web']` — is that a security risk?**
+For production, always add `'auth'` and optionally a Gate check. See [Section 13 — Access Control](#13-access-control).
 
-See [Data Protection Guide](docs_en/09_features_data_protection.md) for details.
+**Q: Can I customize the dashboard views?**
+Yes. Publish them and edit:
+```bash
+php artisan vendor:publish --tag=request-log-analyzer-views
+# Files are now in resources/views/vendor/request-log-analyzer/
+```
+Published views take precedence over the package's views and survive updates.
 
----
+**Q: How do I update the package?**
+```bash
+composer update nintis/request-log-analyzer
+php artisan analyzer:install --force
+```
 
-## ⚡ Performance Impact
+**Q: What does `logAnalyzer()->tag()` do?**
+Attaches a searchable label to the current request. See [Section 8 — Tagging Requests](#8-tagging-requests).
 
-With recommended production settings, the overhead is **< 5%**:
-
-| Setting | Impact |
-|---------|--------|
-| `SAMPLE_RATE=10` | Reduce storage by 90% |
-| `ASYNC=true` | Non-blocking request logging |
-| `IGNORE_STATIC=true` | Skip CSS/JS/images |
-| `RETENTION_DAYS=30` | Auto cleanup old data |
-| `TRACK_GEO=false` | Skip expensive GeoIP lookup |
-
-**Expected storage**: ~1-5 MB per 1,000 requests
+**Q: How do I delete a user's data for GDPR compliance?**
+See [Section 12 — Data Management & Cleanup](#12-data-management--cleanup).
 
 ---
 
-## 🎯 Use Cases
+## License
 
-### Development & Debugging
-- Understand exactly what requests your app is handling
-- Debug slow requests and queries
-- Catch exceptions before users do
-- Trace performance bottlenecks
-
-### Production Monitoring
-- Monitor real user traffic
-- Alert on errors and 5xx responses
-- Track API performance
-- Understand user behavior
-
-### Performance Optimization
-- Identify slow database queries
-- Find N+1 query problems
-- Optimize response times
-- Reduce memory usage
-
-### Security & Compliance
-- Monitor login attempts
-- Track user activity
-- Audit API access
-- Ensure GDPR compliance
-
----
-
-## 📖 Documentation Structure
-
-The documentation is organized for different needs:
-
-| Goal | Start Here |
-|------|-----------|
-| **Just installed?** | [Installation Guide](docs_en/01_installation.md) (10 min) |
-| **Want to configure?** | [Configuration Reference](docs_en/02_configuration.md) (15 min) |
-| **Using the dashboard?** | [Dashboard Guide](docs_en/11_dashboard_guide.md) (20 min) |
-| **Having issues?** | [Troubleshooting](docs_en/13_troubleshooting.md) |
-| **Questions?** | [FAQ](docs_en/14_faq.md) |
-| **Upgrading from v1?** | [Migration Guide](docs_en/15_migration_guide.md) (20 min) |
-| **Want all details?** | [Complete Index](docs_en/INDEX.md) |
-
----
-
-## 🔧 Common Tasks
-
-### Make the Dashboard Accessible Only to Admins
-See [Security Guide](docs_en/08_features_security.md#access-control)
-
-### Reduce Storage Usage
-See [Optimization Guide](docs_en/10_features_optimization.md#storage-optimization)
-
-### Mask Custom Sensitive Fields
-See [Data Protection](docs_en/09_features_data_protection.md#custom-masking)
-
-### Export Data Programmatically  
-See [API Reference](docs_en/16_api_reference.md)
-
-### Monitor Queue-Based Logging
-See [Async Logging](docs_en/10_features_optimization.md#async-logging)
-
----
-
-## ❓ Quick Answers
-
-**Q: Is this for production use?**  
-A: Yes! With async logging and sampling enabled, it adds < 5% overhead. See [Best Practices](docs_en/12_best_practices.md).
-
-**Q: Will it slow down my app?**  
-A: Not if configured correctly. Use async logging (`REQUEST_LOG_ANALYZER_ASYNC=true`) and sampling (`REQUEST_LOG_ANALYZER_SAMPLE_RATE=10`).
-
-**Q: How much disk space?**  
-A: ~1-5 MB per 1,000 requests. Set retention to auto-cleanup: `REQUEST_LOG_ANALYZER_RETENTION_DAYS=30`.
-
-**Q: Can I use it with other monitoring tools?**  
-A: Yes! It coexists with Laravel Telescope, Debugbar, Sentry, New Relic, etc.
-
-**Q: How do I delete data?**  
-A: Use the artisan command: `php artisan analyzer:clear --older-than=7 --force` or retention auto-cleanup.
-
-See [FAQ](docs_en/14_faq.md) for more questions.
-
----
-
-## 🆘 Need Help?
-
-1. **Installation issues?** → [Installation Guide](docs_en/01_installation.md)
-2. **Configuration problems?** → [Configuration Reference](docs_en/02_configuration.md)
-3. **Dashboard not working?** → [Troubleshooting](docs_en/13_troubleshooting.md)
-4. **Something else?** → [FAQ](docs_en/14_faq.md)
-
----
-
-## 📚 Full Feature Documentation
-
-- 🔗 [HTTP Request Tracking](docs_en/03_features_request_tracking.md)
-- 💾 [Database Query Monitoring](docs_en/04_features_database_queries.md)
-- ⚠️ [Error Tracking & Debugging](docs_en/05_features_error_tracking.md)
-- 📈 [Performance Analytics](docs_en/06_features_performance_analytics.md)
-- 🌍 [GeoIP Tracking](docs_en/07_features_geoip.md)
-- 🔐 [Security Monitoring](docs_en/08_features_security.md)
-- 🔒 [Data Protection & Masking](docs_en/09_features_data_protection.md)
-- ⚡ [Async Logging & Sampling](docs_en/10_features_optimization.md)
-- 🖥️ [Dashboard Complete Guide](docs_en/11_dashboard_guide.md)
-- 💡 [Best Practices & Tips](docs_en/12_best_practices.md)
-- 🔌 [JSON API Documentation](docs_en/16_api_reference.md)
-
----
-
-## 🌍 Language Support
-
-- 🇬🇧 **English**: Full documentation in `docs_en/`
-- 🇧🇩 **Bengali**: বাংলা ডকুমেন্টেশন in `docs_bn/`
-
----
-
-## 🚀 What's New in v2
-
-- ✨ **Redesigned Dashboard** — Beautiful new UI with hero cards and charts
-- 👥 **User Tracking** — Active users, login history, per-user analytics
-- 🔒 **Enhanced Security** — Data masking, GDPR compliance
-- ⚡ **Better Performance** — Async logging, smart sampling
-- 🔌 **New JSON API** — Programmatic data access
-- 🌍 **GeoIP Integration** — Geographic insights
-- 📈 **Advanced Analytics** — Route analytics, performance metrics
-
-See [Migration Guide](docs_en/15_migration_guide.md) if upgrading from v1.
-
----
-
-## 📄 License
-
-MIT License — Free to use and modify
-
----
-
-## 🙏 Support
-
-- 📚 **Documentation**: [docs_en/INDEX.md](docs_en/INDEX.md)
-- ❓ **FAQ**: [docs_en/14_faq.md](docs_en/14_faq.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/nin-company/request-log-analyzer)
-- 💬 **Questions**: Create an issue or contact support
-
----
-
-## 📊 Happy Monitoring!
-
-You now have powerful insights into every request your Laravel app handles. 
-
-**Next steps:**
-1. ✅ Visit the dashboard at `/request-log-analyzer`
-2. ✅ Make some test requests to see data
-3. ✅ Read [Configuration Guide](docs_en/02_configuration.md) to customize
-4. ✅ Check [Best Practices](docs_en/12_best_practices.md) for production
-
-Happy logging! 🚀
+MIT — free to use and modify.

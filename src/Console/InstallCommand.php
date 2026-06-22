@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 class InstallCommand extends Command
 {
     protected $signature = 'analyzer:install
-                            {--force : Overwrite existing config and migration files}
+                            {--force : Overwrite existing config, migration, and view files}
                             {--no-migrate : Skip running migrations}';
 
     protected $description = 'Install the Request Log Analyzer: publish config, migrations and run migrations';
@@ -44,7 +44,27 @@ class InstallCommand extends Command
             $this->call('vendor:publish', $args);
         });
 
-        // ── 3. Run migrations ─────────────────────────────────────────────
+        // ── 3. Publish views ──────────────────────────────────────────────
+        // Always force-publish views so that stale files from a previous install
+        // (or older package version) do not shadow new view files in the package.
+        $this->components->task('Publishing views', function () {
+            $this->call('vendor:publish', [
+                '--tag'      => 'request-log-analyzer-views',
+                '--provider' => 'NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider',
+                '--force'    => true,
+            ]);
+        });
+
+        // ── 4. Publish assets (CSS/JS) ────────────────────────────────────
+        $this->components->task('Publishing assets', function () {
+            $this->call('vendor:publish', [
+                '--tag'      => 'request-log-analyzer-assets',
+                '--provider' => 'NIN\\RequestLogAnalyzer\\RequestLogAnalyzerServiceProvider',
+                '--force'    => true,
+            ]);
+        });
+
+        // ── 5. Run migrations ─────────────────────────────────────────────
         if (! $this->option('no-migrate')) {
             $this->components->task('Running package migrations', function () {
                 $this->call('migrate', [
