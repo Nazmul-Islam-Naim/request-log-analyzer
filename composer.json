@@ -1,6 +1,7 @@
 {
     "name": "nintis/request-log-analyzer",
     "description": "A Laravel package for logging and analyzing HTTP requests.",
+    "version": "2.0.0",
     "type": "library",
     "license": "MIT",
     "authors": [
